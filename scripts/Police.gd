@@ -6,6 +6,8 @@ extends CharacterBody2D
 
 enum State { PATROL, CHASE }
 
+signal defeated(at_position: Vector2)
+
 const CHASE_SPEED := 210.0
 const PATROL_SPEED := 90.0
 const SIGHT_RANGE := 420.0
@@ -16,6 +18,8 @@ var player: Player
 var bounds := Rect2(Vector2.ZERO, Vector2(1900, 1150))
 var state := State.PATROL
 var lose_timer := 0.0
+var health := 3
+var active := true
 
 var _last_seen := Vector2.ZERO
 var _patrol_target := Vector2.ZERO
@@ -37,6 +41,8 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if not active:
+		return
 	if player == null or not is_instance_valid(player):
 		return
 
@@ -65,8 +71,11 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 
-func knock_out() -> void:
-	queue_free()
+func take_hit(damage: int) -> void:
+	health -= damage
+	if health <= 0:
+		defeated.emit(global_position)
+		queue_free()
 
 
 func _chase() -> void:
